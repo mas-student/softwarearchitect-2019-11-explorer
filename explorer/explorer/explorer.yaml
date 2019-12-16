@@ -1,0 +1,4 @@
+db:
+  database: architect_2019_11
+  host: db
+  port: 27017
