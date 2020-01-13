@@ -27,6 +27,26 @@
     docker-compose up explorer
 ```
 
+## Выполнение ручной проверки
+
+установка http клиента (нет никаких препятствий для использования cUrl)
+```
+    apt-get install httpie
+```
+
+создание и получения кошелька
+```
+    http --session=explorer -v http://127.0.0.1:18000/signup email=user@site.net password=12345678
+
+    http --session=explorer -v http://127.0.0.1:18000/signin email=user@site.net password=12345678
+
+    http --session=explorer -v http://127.0.0.1:18000/wallets address=1234567890ABCDEF
+
+    http --session=explorer -v http://127.0.0.1:18000/wallets 
+
+```
+
+
 ## Запуск самопроверки
 ```
     docker-compose run explorer-test

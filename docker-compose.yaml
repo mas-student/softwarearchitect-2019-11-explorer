@@ -3,9 +3,17 @@ version: '3'
 services:
   db:
     image: mongo:latest
+    expose:
+      - "27017"
+    ports:
+      - "57017:27017"
 
   explorer:
     build: ./explorer
+    expose:
+      - "8000"
+    ports:
+      - "18000:8000"
     volumes:
       - ./explorer:/home/user/explorer
     depends_on:
