@@ -1,10 +1,11 @@
 from aiohttp_session import get_session
 from aiohttp import web
+from aiohttp.web_request import Request
 
 from .db import User, Wallet
 
 
-async def signup(request):
+async def signup(request: Request):
     user = await User.create(
         request.app.db,
         email=(await request.json())['email'],
