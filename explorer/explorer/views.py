@@ -34,7 +34,7 @@ async def signin(request):
 
 
 async def wallet_create(request):
-    address = (await request.post())['address']
+    address = (await request.json())['address']
 
     session = await get_session(request)
     email = session.get('email')
