@@ -34,7 +34,12 @@ async def signin(request):
 
 
 async def wallet_create(request):
-    address = (await request.json())['address']
+    data = await request.json()
+
+    if 'address' not in data:
+        return web.Response(status=400, body='password incorrect')
+
+    address = data['address']
 
     session = await get_session(request)
     email = session.get('email')

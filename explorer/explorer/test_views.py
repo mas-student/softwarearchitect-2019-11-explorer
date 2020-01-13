@@ -54,6 +54,19 @@ async def test_wallet_create(client: TestClient):
         assert await Wallet.count(client.app.db) == 1
 
 
+async def test_wallet_create_invalid_format(client: TestClient):
+    async with client as client:
+        assert await Wallet.count(client.app.db) == 0
+
+        await client.post('/signup', json=dict(email='user@site.net', password='password'))
+        await client.post('/signin', json=dict(email='user@site.net', password='password'))
+
+        resp = await client.post('/wallets', json={})
+
+        assert resp.status == 400
+        assert await Wallet.count(client.app.db) == 0
+
+
 async def test_wallet_list(client: TestClient):
     async with client as client:
         await client.post('/signup', json=dict(email='user@site.net', password='password'))
