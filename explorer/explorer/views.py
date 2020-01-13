@@ -7,8 +7,8 @@ from .db import User, Wallet
 async def signup(request):
     user = await User.create(
         request.app.db,
-        email=(await request.post())['email'],
-        password=(await request.post())['password'],
+        email=(await request.json())['email'],
+        password=(await request.json())['password'],
     )
 
     return web.json_response(dict(id=str(user._id), email=user.email), status=201)
@@ -17,8 +17,8 @@ async def signup(request):
 async def signin(request):
     session = await get_session(request)
 
-    email = (await request.post())['email']
-    password = (await request.post())['password']
+    email = (await request.json())['email']
+    password = (await request.json())['password']
 
     user = await User.get(request.app.db, email=email)
 
