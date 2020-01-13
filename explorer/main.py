@@ -8,7 +8,7 @@ from explorer.application import make_app
 basicConfig()
 logger = getLogger(__name__)
 
+app = make_app()
 
 if __name__ == '__main__':
-    app = make_app()
     web.run_app(app)
