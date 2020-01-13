@@ -1,0 +1,141 @@
+---
+swagger: '2.0'
+info:
+  description: 'This is a training block chain explorer'
+  version: 1.0.1
+  title: Blockchain explorer
+tags:
+- name: wallet
+  description: Everything about your wallet
+- name: user
+  description: Authentication stuff
+schemes:
+- http
+paths:
+  /signup:
+    post:
+      tags:
+      - user
+      summary: Sign up a new user
+      requestBody:
+        required: true
+        description: A JSON object containing the email and password.
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/SignRequest'
+      security: []
+      responses:
+        '201':
+          description: successful operation
+          schema:
+            "$ref": '#/definitions/User'
+  /signin:
+    post:
+      tags:
+      - user
+      summary: Signs in and returns the authentication cookie
+      requestBody:
+        required: true
+        description: A JSON object containing the email and password.
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/SignRequest'
+      security: []
+      responses:
+        '200':
+          description: >
+            Successfully authenticated.
+            The email is returned in a cookie named `AIOHTTP_SESSION`. You need to include this cookie in subsequent requests.
+          headers:
+            Set-Cookie:
+              schema:
+                AIOHTTP_SESSION:
+                  type: string
+                  example: AIOHTTP_SESSION="gAAAAABeGvZFA99q97u_OvaMF09HUaC1SAZPApxydKOlkPHkzRQ05Ve9hf19MvkK8-e7qW1Q8uwp9sQR8l4drkQm5r9IyCubWBmqoE8lvpax6ucYNoQqyRNnm3Uy2VASP5DOozk711Kl9QKCiUHEMvD6gbxNlSpgKA=="; HttpOnly; Path=/
+  "/wallets":
+    get:
+      tags:
+      - pet
+      summary: Returns all user's wallets
+      description: ''
+      produces:
+      - application/json
+      parameters: []
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            type: array
+            items:
+              "$ref": '#/definitions/Wallet'
+        '401':
+          description: Invalid ID supplied
+      security:
+      - sessionAuth
+    post:
+      tags:
+      - wallet
+      summary: Add a new wallet
+      description: ''
+      requestBody:
+        required: true
+        description: Wallet object that needs to be added to the database
+        content:
+          application/json:
+            schema:
+              $ref: '#/definitions/Wallet'
+      responses:
+        '201':
+          description: successful operation
+          schema:
+            "$ref": '#/definitions/Wallet'
+        '400':
+          description: Invalid format
+    - security:
+        - sessionAuth
+definitionsSecurity:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: AIOHTTP_SESSION
+definitions:
+  Wallet:
+    type: object
+    required:
+    - address
+    properties:
+      id:
+        type: string
+        format: uuid
+      address:
+        type: string
+        example: mvc8Za9A91V6m5EtCbEsN29ij9FU2bL3yj
+  User:
+    type: object
+    required:
+    - email
+    properties:
+      id:
+        type: string
+        format: uuid
+      email:
+        type: string
+        format: email
+      password:
+        type: string
+        format: password
+  SignRequest:
+    type: object
+    required:
+    - email
+    - password
+    properties:
+      email:
+        type: string
+        format: email
+      password:
+        type: string
+        format: password
