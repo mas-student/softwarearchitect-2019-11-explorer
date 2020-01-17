@@ -17,47 +17,51 @@ paths:
       tags:
       - user
       summary: Sign up a new user
-      requestBody:
+      parameters:
+      - in: body
+        name: body
+        description: Wallet object that needs to be added to the database
         required: true
-        description: A JSON object containing the email and password.
-        content:
-          application/json:
-            schema:
-              $ref: '#/definitions/SignRequest'
+        schema:
+          "$ref": "#/definitions/SignRequest"
       security: []
       responses:
         '201':
           description: successful operation
           schema:
             "$ref": '#/definitions/User'
+        '400':
+          description: Error format
   /signin:
     post:
       tags:
       - user
       summary: Signs in and returns the authentication cookie
-      requestBody:
+      parameters:
+      - in: body
+        name: body
+        description: Wallet object that needs to be added to the database
         required: true
-        description: A JSON object containing the email and password.
-        content:
-          application/json:
-            schema:
-              $ref: '#/definitions/SignRequest'
-      security: []
+        schema:
+          "$ref": "#/definitions/SignRequest"
+
       responses:
         '200':
           description: >
             Successfully authenticated.
             The email is returned in a cookie named `AIOHTTP_SESSION`. You need to include this cookie in subsequent requests.
           headers:
-            Set-Cookie:
-              schema:
-                AIOHTTP_SESSION:
-                  type: string
-                  example: AIOHTTP_SESSION="gAAAAABeGvZFA99q97u_OvaMF09HUaC1SAZPApxydKOlkPHkzRQ05Ve9hf19MvkK8-e7qW1Q8uwp9sQR8l4drkQm5r9IyCubWBmqoE8lvpax6ucYNoQqyRNnm3Uy2VASP5DOozk711Kl9QKCiUHEMvD6gbxNlSpgKA=="; HttpOnly; Path=/
+            X-Set-Cookie:
+              type: string
+              format: cookie
+              description: cookie which contains email signed in user
+        '400':
+          description: Invalid username/password supplied
+      security: []
   "/wallets":
     get:
       tags:
-      - pet
+      - wallet
       summary: Returns all user's wallets
       description: ''
       produces:
@@ -73,19 +77,19 @@ paths:
         '401':
           description: Invalid ID supplied
       security:
-      - sessionAuth
+      - api_key: []
     post:
       tags:
       - wallet
       summary: Add a new wallet
       description: ''
-      requestBody:
-        required: true
+      parameters:
+      - in: body
+        name: body
         description: Wallet object that needs to be added to the database
-        content:
-          application/json:
-            schema:
-              $ref: '#/definitions/Wallet'
+        required: true
+        schema:
+          "$ref": "#/definitions/Wallet"
       responses:
         '201':
           description: successful operation
@@ -93,14 +97,13 @@ paths:
             "$ref": '#/definitions/Wallet'
         '400':
           description: Invalid format
-    - security:
-        - sessionAuth
-definitionsSecurity:
-  securitySchemes:
-    sessionAuth:
-      type: apiKey
-      in: cookie
-      name: AIOHTTP_SESSION
+      security:
+      - api_key: []
+securityDefinitions:
+  api_key:
+    type: apiKey
+    name: api_key
+    in: header
 definitions:
   Wallet:
     type: object
@@ -117,6 +120,7 @@ definitions:
     type: object
     required:
     - email
+    - password
     properties:
       id:
         type: string
@@ -139,3 +143,4 @@ definitions:
       password:
         type: string
         format: password
+...
