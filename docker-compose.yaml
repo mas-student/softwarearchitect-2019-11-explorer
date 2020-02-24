@@ -1,18 +1,72 @@
 version: '3'
 
 services:
+  # BUS {
+  bus:
+    image: rabbitmq
+    expose:
+      - "5672"
+    ports:
+      - "5672:5672"
+  # BUS }
+
+  # WALLETS {
+  db:
+    image: mongo:latest
+    expose:
+      - "27017"
+    ports:
+      - "57017:27017"
+  #
+  backend:
+    build: ./backend
+    expose:
+      - "18000"
+    ports:
+      - "18000:8080"
+    volumes:
+      - ./common/common:/home/user/backend/common
+      - ./backend:/home/user/backend
+    command: [ "/bin/sh", "entrypoint.sh", "dev" ]
+    depends_on:
+      - db
+      - bus
+  #
+  backend-test:
+    build: ./backend
+    volumes:
+      - ./backend:/home/user/backend
+    depends_on:
+      - db
+    command: [ "/bin/sh", "entrypoint.sh", "test" ]
+  # WALLETS }
+
+  # TESTING {
+  tester:
+    build: ./tester
+    volumes:
+      - ./common/common:/home/user/backend/common
+      - ./tester:/home/user/tester
+    depends_on:
+      - bus
+      - backend
+      - loader
+  # TESTING }
+
+  # CONTRACT {
   gateway:
     image: nginx
     volumes:
-     - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx.conf:/etc/nginx/nginx.conf
     expose:
       - "80"
     ports:
-     - "80:80"
+      - "80:80"
     depends_on:
-     - explorer
-     - swagger-ui
-
+      - backend
+      - swagger-ui
+      - loader
+  #
   swagger-ui:
     image: swaggerapi/swagger-ui
     expose:
@@ -23,30 +77,28 @@ services:
       SWAGGER_JSON: "/foo/swagger.json"
       BASE_URL: "/swagger/"
     volumes:
-      - /home/alexander/CloudStation/softwarearchitect-2019-11/2019-11-explorer/:/foo/
+      - ./:/foo/
+  # CONTRACT }
 
-  db:
-    image: mongo:latest
+  # CHAIN {
+  bitcoin-server:
+    image: ruimarinho/bitcoin-core
     expose:
-      - "27017"
+      - "18444"
+      - "18443"
     ports:
-      - "57017:27017"
-
-  explorer:
-    build: ./explorer
-    expose:
-      - "18000"
-    ports:
-      - "18000:8080"
+      - "18444:18444"
+      - "18443:18443"
+    command: bitcoind -server -printtoconsole -regtest=1 -rpcuser=u -rpcpassword=p -rpcallowip=0.0.0.0/0 -rpcbind=0.0.0.0
+  #
+  loader:
+    build: ./loader
     volumes:
-      - ./explorer:/home/user/explorer
+      - ./common/common:/home/user/loader/common
+      - ./loader:/home/user/loader
+    command: [ "/bin/sh", "entrypoint.sh", "dev" ]
     depends_on:
-      - db
+      - bus
+      - bitcoin-server
+  # CHAIN }
 
-  explorer-test:
-    build: ./explorer
-    volumes:
-      - ./explorer:/home/user/explorer
-    depends_on:
-      - db
-    command: [ "/bin/sh", "entrypoint.sh", "test" ]

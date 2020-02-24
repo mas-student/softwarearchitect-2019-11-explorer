@@ -1,12 +1,25 @@
+from logging import getLogger
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import (
+    List, Optional,
+    TypeVar, Type,
+)
 
 from bson.objectid import ObjectId
 import motor.motor_asyncio
 
 
+'''
+DAO module
+'''
+
+logger = getLogger(__name__)
+
+
 @dataclass
 class ModelMixin:
+    T = TypeVar('T', bound='Base')
+
     COLLECTION = None
 
     _id: ObjectId
@@ -26,7 +39,18 @@ class ModelMixin:
         return cls(**data)
 
     @classmethod
-    async def filter(cls, db, **query) -> List['ModelMixin']:
+    async def update(cls, db, query: dict, **values) -> Optional['ModelMixin']:
+        await db[cls.COLLECTION].update_one(query, {'$set': values})
+
+        data = await db[cls.COLLECTION].find_one(query)
+
+        if data is None:
+            return
+
+        return cls(**data)
+
+    @classmethod
+    async def filter(cls: Type[T], db, **query) -> T:
         return [cls(**data) async for data in db[cls.COLLECTION].find(query)]
 
     @classmethod
@@ -54,8 +78,9 @@ class Wallet(ModelMixin):
     address: str
 
 
-async def init_db(app):
-    host = 'db'
+async def init_db(app, testing=False):
+    logger.warning('init db')
+    host = 'localhost' if testing else 'db'
 
-    client = motor.motor_asyncio.AsyncIOMotorClient(host, 27017)
-    app.db = client.explorer
+    client = motor.motor_asyncio.AsyncIOMotorClient(host, 57017 if testing else 27017)
+    app.db = client.testing_backend if testing else client.backend

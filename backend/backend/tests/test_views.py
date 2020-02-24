@@ -1,10 +1,14 @@
 from operator import itemgetter
+from unittest.mock import patch, AsyncMock
 
+from pytest import mark
 from aiohttp.test_utils import TestClient
 
-from explorer.fixtures import app, client
-from explorer.db import User, Wallet
+from backend.fixtures import app, client
+from backend.db import User, Wallet
 
+
+# WALLETS {
 
 async def test_signup(client: TestClient):
     resp = await client.post('/signup', json=dict(email='e', password='password'))
@@ -71,11 +75,6 @@ async def test_wallet_list(client: TestClient):
     async with client as client:
         await client.post('/signup', json=dict(email='user@site.net', password='password'))
 
-        resp = await client.get('/wallets')
-
-        assert resp.status == 401
-        assert len(await resp.json()) == 0
-
         await client.post('/signin', json=dict(email='user@site.net', password='password'))
         await client.post('/wallets', json={'address': 'A1'})
 
@@ -84,6 +83,38 @@ async def test_wallet_list(client: TestClient):
         assert len((await resp.json())) == 1
         assert 'A1' in set(map(itemgetter('address'), (await resp.json())))
 
+# WALLETS }
+
+# BALANCE {
+
+@patch('backend.views.call', AsyncMock(return_value={'result': -1}))
+async def test_handler_balance(client: TestClient):
+    async with client as client:
+        await client.post('/signup', json=dict(email='user@site.net', password='password'))
+        await client.post('/signin', json=dict(email='user@site.net', password='password'))
+        await client.post('/wallets', json={'address': 'A1'})
+
+        resp = await client.get('/wallets')
+
+        id, *_ = map(itemgetter('id'), await resp.json())
+
+        resp = await client.get(f'/wallets/{id}/balance')
+
+        balance = itemgetter('balance')(await resp.json())
+
+        assert balance == -1
+
+
+@patch('backend.views.call', AsyncMock(return_value={'result': 'address1'}))
+async def test_handler_generate(client: TestClient):
+    async with client as client:
+        resp = await client.post('/generate', json=dict(address='address1'))
+
+        address = itemgetter('address')(await resp.json())
+
+        assert address == 'address1'
+
+# BALANCE }
 
 async def test_db(app):
     assert app.db is not None

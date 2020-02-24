@@ -9,6 +9,8 @@ tags:
   description: Everything about your wallet
 - name: user
   description: Authentication stuff
+- name: balance
+  description: Difference between your incomes and outcomes
 schemes:
 - http
 paths:
@@ -99,6 +101,48 @@ paths:
           description: Invalid format
       security:
       - api_key: []
+  "/generate":
+    post:
+      tags:
+      - balance
+      summary: Generate coin base blocks for definite address
+      description: ''
+      parameters:
+      - in: body
+        name: body
+        description: Wallet whose address that blocks need to be generated for
+        required: true
+        schema:
+          "$ref": "#/definitions/Wallet"
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            "$ref": '#/definitions/Wallet'
+        '400':
+          description: Invalid format
+      security: []
+  "/balance":
+    post:
+      tags:
+      - balance
+      summary: Calculate balance for definite address
+      description: ''
+      parameters:
+      - in: body
+        name: body
+        description: Wallet whose address that balance need to be calculated
+        required: true
+        schema:
+          "$ref": "#/definitions/Wallet"
+      responses:
+        '200':
+          description: successful operation
+          schema:
+            "$ref": '#/definitions/Wallet'
+        '400':
+          description: Invalid format
+      security: []
 securityDefinitions:
   api_key:
     type: apiKey
