@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import Optional
 from asyncio import create_task, gather
 
@@ -11,12 +12,22 @@ from loader.db import DB
 from loader.corenode import Corenode, init_node
 
 
+logger = getLogger(__name__)
+
+
 class Application():
     db: Optional[DB] = None
     node: Optional[Corenode] = None
     bus: Optional[Bus] = None
     bus_hostname: Optional[str] = None
     pass
+
+
+async def init_events(app):
+    async def on_income(data: dict):
+        await app.bus.publish(data, queue_name='incomes')
+
+    app.db.on_income = on_income
 
 
 async def start_background_tasks(app):
@@ -36,6 +47,7 @@ def make_app():
     app.on_startup.append(init_bus)
     app.on_startup.append(init_db)
     app.on_startup.append(init_node)
+    app.on_startup.append(init_events)
 
     app.on_startup.append(start_background_tasks)
     app.on_cleanup.append(cleanup_background_tasks)

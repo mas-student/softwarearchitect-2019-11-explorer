@@ -1,0 +1,8 @@
+###
+
+POST http://localhost:80/generate
+Content-Type: application/json
+
+{"address": "2NEmNpj2iW7xGw6ndUpZNrAeRz765PStNGP"}
+
+###

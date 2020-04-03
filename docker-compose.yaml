@@ -51,6 +51,22 @@ services:
       - bus
       - backend
       - loader
+
+  frontend:
+#    image: bayesimpact/react-base
+    build: frontend
+    environment:
+      HOST: 0.0.0.0
+    expose:
+      - "3000"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/usr/app/src
+      - ./frontend/public:/usr/app/public
+      - ./frontend/package.json:/usr/app/package.json
+    depends_on:
+      - backend
   # TESTING }
 
   # CONTRACT {
@@ -66,6 +82,7 @@ services:
       - backend
       - swagger-ui
       - loader
+      - frontend
   #
   swagger-ui:
     image: swaggerapi/swagger-ui

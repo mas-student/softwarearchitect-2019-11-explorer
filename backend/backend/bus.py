@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from json import dumps
 from typing import Union, Generator
 
 from asyncio import run
@@ -20,10 +21,25 @@ HOSTNAME = 'bus'
 class Income:
     connection: Connection
     data: dict
+    address: str
+    value: float
 
 
 async def handler_income(app, income: Income):
-    pass
+    logger.warning(f'handling income {income.address} {income.value}')
+    oks = 0
+    for ws in app.websockets:
+        data = dict(address=income.address, value=income.value)
+        buffer = dumps(data)
+        try:
+            result = await ws.send_str(buffer)
+        except Exception as e:
+            logger.warning(f'{type(e)}("{e}") happened when sending to websocket {ws}')
+
+        else:
+            oks += 1
+
+    logger.warning(f'handled income {income.address} {income.value} with {oks} times')
 
 
 @dataclass
@@ -33,8 +49,10 @@ class Bus(BaseBus):
             async with (await connect(self.hostname)) as testing_connection:
                 try:
                     mid = data.get('id')
+                    address = data.get('address')
+                    value = data.get('value')
 
-                    yield Income(data=data, connection=testing_connection)
+                    yield Income(data=data, connection=testing_connection, address=address, value=value)
 
                 except Exception as e:
                     logger.error(str(e))

@@ -1,0 +1,32 @@
+POST http://localhost:80/signup
+Content-Type: application/json
+
+{"email": "user@site.net", "password": "12345678"}
+
+###
+
+POST http://localhost:80/signin
+Content-Type: application/json
+
+{"email": "user@site.net", "password": "12345678"}
+
+###
+
+POST http://localhost:80/signin
+Content-Type: application/json
+
+{"email": "user@site.net", "password": "12345678"}
+
+###
+
+POST http://localhost:80/wallets
+Content-Type: application/json
+
+{"address": "2NEmNpj2iW7xGw6ndUpZNrAeRz765PStNGP"}
+
+###
+
+GET http://localhost:80/wallets
+Accept: application/json
+
+###

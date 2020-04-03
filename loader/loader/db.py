@@ -16,6 +16,7 @@ NODE = 'http://bitcoin-server:18443/'
 
 class DB:
     def __init__(self, db_path: str = None):
+        self.on_income = lambda data: logger.warning(f'on income {data}')
         if db_path is None:
             db_path = '/tmp/tempdb/'
 
@@ -27,8 +28,8 @@ class DB:
     def put_element(self, *args, **kwargs):
         put_element(self.base, *args, **kwargs)
 
-    def put_block(self, block: Block):
-        put_block(self.base, block)
+    async def put_block(self, block: Block):
+        await put_block(self.base, block, self.on_income)
 
     def get_balance(self, address: str):
         return get_balance(self.base, address)
@@ -51,7 +52,7 @@ def put_element(leveldb: BaseDB, key: str, element: BlockchainElement):
     leveldb.put(key.encode('utf-8'), dumps(data).encode('utf-8'))
 
 
-def put_block(leveldb: BaseDB, block: Block):
+async def put_block(leveldb: BaseDB, block: Block, on_income):
     leveldb.put(block.hash.encode('utf-8'), dumps(asdict(block)).encode('utf-8'))
 
     for tx in block.tx:
@@ -69,6 +70,7 @@ def put_block(leveldb: BaseDB, block: Block):
                     nos.setdefault(address, [None, None])[0] = no
         for no, vout in enumerate(tx.vout):
             for address in vout.scriptPubKey.addresses:
+                await on_income(dict(address=address, value=vout.value))
                 nos.setdefault(address, [None, None])[1] = no
 
         for address, (vin, vout) in nos.items():
@@ -115,7 +117,7 @@ async def handler_blocks(app):
     logger.warning('handling blocks')
     async for block in app.node.blocks():
         logger.warning(f'handling block {block}')
-        app.db.put_block(block)
+        await app.db.put_block(block)
 
 
 def main(medium=False):

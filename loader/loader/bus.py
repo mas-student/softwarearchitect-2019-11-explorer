@@ -4,7 +4,7 @@ from typing import Generator
 from asyncio import run
 
 from common.bus import (
-    connect, subscribe, BaseBus
+    connect, subscribe, BaseBus, publish
 )
 from loader.commands import Command
 
@@ -17,6 +17,10 @@ HOSTNAME = 'bus'
 
 @dataclass
 class Bus(BaseBus):
+    async def publish(self, data: dict, queue_name: str):
+        async with (await connect(hostname=self.hostname)) as connection:
+            await publish(connection=connection, message=data, queue_name=queue_name)
+
     async def receiving_commands(self) -> Generator[Command, None, None]:
         async for data in subscribe('commands', hostname=self.hostname):
             async with (await connect(hostname=self.hostname)) as return_connection:

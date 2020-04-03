@@ -15,6 +15,7 @@ logger = getLogger(__name__)
 
 
 def setup_app(app):
+    app.websockets = []
     fernet_key = fernet.Fernet.generate_key()
     secret_key = base64.urlsafe_b64decode(fernet_key)
     session_setup(app, EncryptedCookieStorage(secret_key))
