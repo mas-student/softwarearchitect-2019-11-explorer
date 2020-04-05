@@ -1,5 +1,7 @@
 from logging import getLogger
 from aiohttp import web
+
+from common.logging import debug
 # WALLETS {
 from .views import handler_signin, handler_signup, handler_wallet_create, handler_wallet_list
 # WALLETS }
@@ -15,7 +17,7 @@ logger = getLogger(__name__)
 
 
 def setup_routes(app):
-    logger.warning('setup routes')
+    debug('setting up routes')
 
     # WALLETS {
     app.router.add_post('/signup', handler_signup)
@@ -33,3 +35,5 @@ def setup_routes(app):
     # REALTIME {
     app.router.add_get('/ws', websocket_handler)
     # REALTIME }
+
+    debug('set up routes')

@@ -218,10 +218,9 @@ async def websocket_handler(request):
 
     await ws.prepare(request)
 
-    logger.warning(f'websocket connection inited {len(app.websockets)-1}')
+    debug(f'websocket connection inited {len(app.websockets)-1}')
 
     async for msg in ws:
-        logger.warning(f'MSG {msg}')
         if msg.type == aiohttp.WSMsgType.TEXT:
             if msg.data == 'close':
                 await ws.close()

@@ -9,6 +9,7 @@ from common.bus import (
     connect, publish, subscribe,
     Connection, BaseBus
 )
+from common.logging import debug
 
 
 logger = getLogger(__name__)
@@ -75,8 +76,9 @@ async def handling_incomes(app):
 
 
 async def init_bus(app):
-    logger.warning('init bus')
+    debug('initiating bus')
     app.bus = Bus(hostname=HOSTNAME)
+    debug('initiated bus')
 
 
 def main(medium=False):

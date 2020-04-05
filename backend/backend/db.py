@@ -8,6 +8,8 @@ from typing import (
 from bson.objectid import ObjectId
 import motor.motor_asyncio
 
+from common.logging import debug
+
 
 '''
 DAO module
@@ -79,8 +81,11 @@ class Wallet(ModelMixin):
 
 
 async def init_db(app, testing=False):
-    logger.warning('init db')
+    debug('initiating db')
+
     host = 'localhost' if testing else 'db'
 
     client = motor.motor_asyncio.AsyncIOMotorClient(host, 57017 if testing else 27017)
     app.db = client.testing_backend if testing else client.backend
+
+    debug('initiated db')

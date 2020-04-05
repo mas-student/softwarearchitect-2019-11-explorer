@@ -18,6 +18,7 @@ const App = observer(
                 email: "",
                 wallets: null,
                 session_id: null,
+                adding: false
             };
 
             props.globals.app = this;
@@ -39,7 +40,7 @@ const App = observer(
                 )
                 .then(response => response.json())
                 .then(data => {
-                    console.debug(`Signing up succeeded with ${JSON.stringify(data)}`);
+                    console.log(`Signing up succeeded with ${JSON.stringify(data)}`);
                 })
                 .catch(err => {
                     alert(`Регистрация выполнилась с ошибкой ${JSON.stringify(err)}`)
@@ -84,23 +85,29 @@ const App = observer(
             const session_id = this.state.session_id;
             const address = prompt('Введите адрес кошелька');
 
+            console.log(`Creating wallet ${address}`);
+
             const data = {session_id, address};
+            this.setState({adding: true});
             fetch(
                 'http://localhost:3000/wallets',
                 {method: 'POST', body: JSON.stringify(data)}
                 )
                 .then(response => response.json())
                 .then(data => {
-                    console.debug(`Creating wallet up succeeded with ${JSON.stringify(data)}`);
+                    console.log(`Creating wallet succeeded with ${JSON.stringify(data)}`);
+                    this.setState({adding: false});
                     this.props.store.fetch();
                 })
                 .catch(err => {
-                    alert(`Creating wallet up failed with ${JSON.stringify(err)}`)
+                    this.setState({adding: false});
+                    alert(`Creating wallet failed with ${JSON.stringify(err)}`)
                 });
         }
 
         render() {
             const loading = this.props.store.loading;
+            const adding = this.state.adding;
             const wallets = this.props.store.balanced;
 
             return (
@@ -122,6 +129,10 @@ const App = observer(
                             {loading
                                 ? <span>Получение кошельков...</span>
                                 : <div>
+                                    {adding
+                                        ? <span>Добавление кошелька...</span>
+                                        : <span></span>
+                                    }
                                     <p>У вас добавлено {wallets.length} кошельков</p>
                                     <button onClick={() => this.createWallet()}>Добавить кошелек</button>
 

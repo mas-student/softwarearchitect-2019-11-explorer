@@ -1,4 +1,5 @@
-from asyncio import run, sleep, gather, Event, wait_for, CancelledError
+from logging import getLogger
+from asyncio import run, sleep, gather, Event, wait_for, CancelledError, TimeoutError
 from typing import Optional, Generator
 from dataclasses import dataclass
 
@@ -6,8 +7,7 @@ from aiohttp import ClientSession, BasicAuth
 from json import dumps
 from pprint import pprint
 
-from logging import getLogger
-
+from common.logging import debug
 from loader.models import Block
 
 
@@ -35,7 +35,7 @@ class Corenode:
                     text = await response.text()
                     logger.warning(f'{type(e).__name__}:{e} () raises when executing {signature}\n{text}')
                     return
-                logger.warning(f'{signature} -> {data}')
+                debug(f'{signature} -> {data}')
                 return data['result']
 
     @dataclass
@@ -64,13 +64,23 @@ class Corenode:
                     result = Block.from_dict(block_data)
 
                 else:
-                    logger.warning(f'before waiting for {self.corenode.generating}')
+                    debug(f'before waiting for {self.corenode.generating}')
+
+                    waited = False
+
                     try:
                         await wait_for(self.corenode.generating.wait(), timeout=3.0)
+                    except (TimeoutError, CancelledError):
+                        pass
                     except Exception as e:
                         logger.warning(f'{type(e).__name__}{e} raises while waiting for {self.corenode.generating}')
                         continue
-                    logger.warning(f'after waiting for {self.corenode.generating}')
+
+                    else:
+                        waited = True
+
+                    debug(f'{"Success" if waited  else "Failure"} after waiting for {self.corenode.generating}')
+
                     self.corenode.generating.clear()
 
             return result
@@ -79,16 +89,16 @@ class Corenode:
         return self.Iterator(corenode=self)
 
     async def generate(self, address=None):
-        logger.warning(f'generating {address}')
+        debug(f'generating {address}')
         if address is None:
             address = await self.execute_call('getnewaddress')
-            logger.warning(f'call getnewaddress -> {address}')
+            debug(f'call getnewaddress -> {address}')
         result = await self.execute_call('generatetoaddress', 101, address)
-        logger.warning(f'call generatetoaddress -> {result}')
+        debug(f'call generatetoaddress -> {result}')
         result = await self.execute_call('getblockcount')
-        logger.warning(f'call getblockcount -> {result}')
+        debug(f'call getblockcount -> {result}')
         result = await self.execute_call('getbalance')
-        logger.warning(f'call getbalance -> {result}')
+        debug(f'call getbalance -> {result}')
 
         self.generating.set()
 

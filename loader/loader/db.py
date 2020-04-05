@@ -5,6 +5,7 @@ from typing import Type, Optional
 
 from plyvel import DB as BaseDB
 
+from common.logging import debug
 from loader.models import BlockchainElement, Block, Transaction
 
 
@@ -80,7 +81,7 @@ async def put_block(leveldb: BaseDB, block: Block, on_income):
 
 
 def get_balance(leveldb: Optional[BaseDB], address: str):
-    logger.warning(f'getting balance {address}')
+    debug(f'getting balance {address}')
     if leveldb is None:
         leveldb = connect()
     result = 0.0
@@ -98,7 +99,7 @@ def get_balance(leveldb: Optional[BaseDB], address: str):
         result += income
         result -= outcome
 
-    logger.warning(f'got balance {address} -> {result}')
+    debug(f'got balance {address} -> {result}')
     return result
 
 
@@ -114,9 +115,9 @@ async def init_db(app):
 
 
 async def handler_blocks(app):
-    logger.warning('handling blocks')
+    debug('handling blocks')
     async for block in app.node.blocks():
-        logger.warning(f'handling block {block}')
+        debug(f'handling block {block}')
         await app.db.put_block(block)
 
 

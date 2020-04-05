@@ -1,6 +1,7 @@
 from logging import getLogger
 from dataclasses import dataclass
 
+from common.logging import debug
 from common.bus import (
     ResponsibleMessage
 )
@@ -15,10 +16,10 @@ class Command(ResponsibleMessage):
 
 
 async def handler_commands(app):
-    logger.warning(f'handling commands')
+    debug(f'handling commands')
     try:
         async for command in app.bus.receiving_commands():
-            logger.warning(f'handling command {command}')
+            debug(f'handling command {command}')
 
             if command.name == 'generate':
                 address = command.params.get('address')
@@ -33,6 +34,8 @@ async def handler_commands(app):
             else:
                 error = f'unknown command {command.name}'
                 await command.respond(None, error)
+
+            debug(f'handled command {command}')
 
     except Exception as e:
         logger.error(f'{type(e).__name__}:{e} raises while handling commands')

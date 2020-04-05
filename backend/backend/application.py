@@ -7,6 +7,7 @@ from aiohttp_session import setup as session_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from aiohttp import web
 
+from common.logging import debug
 from .routes import setup_routes
 from .db import init_db
 from .bus import init_bus, handling_incomes
@@ -33,6 +34,10 @@ async def cleanup_background_tasks(app):
     await gather(app['handling_incomes'])
 
 
+async def on_ready(app):
+    logger.warning('Backend is ready')
+
+
 def make_app():
     app = web.Application()
 
@@ -43,6 +48,8 @@ def make_app():
 
     app.on_startup.append(start_background_tasks)
     app.on_cleanup.append(cleanup_background_tasks)
+
+    app.on_startup.append(on_ready)
 
     return app
 
@@ -58,6 +65,6 @@ async def make_testing_app():
 
 
 def main():
-    logger.warning(f'{__name__}, {main}')
+    debug(f'{__name__}, {main}')
     app = make_app()
     web.run_app(app, host='0.0.0.0', port=8080)

@@ -41,6 +41,10 @@ async def cleanup_background_tasks(app):
     await gather(app['handler_blocks'], app['handler_commands'])
 
 
+async def on_ready(app):
+    logger.warning('Loader is ready')
+
+
 def make_app():
     app = web.Application()
 
@@ -52,9 +56,12 @@ def make_app():
     app.on_startup.append(start_background_tasks)
     app.on_cleanup.append(cleanup_background_tasks)
 
+    app.on_startup.append(on_ready)
+
     return app
 
 
-def main():
-    app = make_app()
+def main(app=None):
+    if app is None:
+        app = make_app()
     web.run_app(app)

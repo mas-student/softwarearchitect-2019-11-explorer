@@ -7,6 +7,8 @@ from json import dumps, loads
 
 from aio_pika import connect as aio_pika_connect, Channel, Queue, Connection, Message
 
+from common.logging import debug
+
 
 logger = getLogger(__name__)
 
@@ -28,14 +30,13 @@ class ResponsibleMessage:
     mid: Optional[int]
 
     async def respond(self, result, error=None):
-        logger.warning(f'responding {result}')
+        debug(f'responding {result}')
         await publish(self.connection, {'result': result, 'error': error, 'id': self.mid}, queue_name=self.return_address)
-        logger.warning(f'responded {result}')
-
+        debug(f'responded {result}')
 
 
 async def connect(hostname='bus', wait_for=30.0) -> Connection:
-    logger.warning(f'connecting to bus on {hostname} waiting for {wait_for}')
+    debug(f'connecting to bus on host({hostname}) waiting for {wait_for}')
     loop = get_event_loop()
 
     started_at = monotonic()
@@ -43,8 +44,8 @@ async def connect(hostname='bus', wait_for=30.0) -> Connection:
         try:
             connection = await aio_pika_connect(f"amqp://guest:guest@{hostname}/", loop=loop)
 
-        except Exception as e:
-            logger.warning(f'elapsed {monotonic() - started_at} {e}')
+        except ConnectionError as e:
+            debug(f'elapsed {monotonic() - started_at} {type(e)} {e}')
 
             await sleep(0.25)
 
@@ -54,7 +55,7 @@ async def connect(hostname='bus', wait_for=30.0) -> Connection:
         else:
             break
 
-    logger.warning('connected')
+    debug(f'connected to bus on host({hostname}) after waiting for {monotonic() - started_at:.4}')
 
     return connection
 
@@ -66,7 +67,7 @@ async def make_queue(connection: Connection, queue_name: str, timeout=None):
 
 
 async def publish(connection: Connection, message: Union[str, dict], queue_name):
-    logger.warning(f'publishing {message} into {queue_name}')
+    debug(f'publishing {message} into {queue_name}')
 
     routing_key = queue_name
     channel = await connection.channel()
@@ -78,11 +79,11 @@ async def publish(connection: Connection, message: Union[str, dict], queue_name)
         timeout=3.0,
     )
 
-    logger.warning('published')
+    debug('published')
 
 
 async def receive(connection: Connection, queue_name: str, wait_for=5.0) -> Optional[bytes]:
-    logger.warning(f'receiving from {queue_name}')
+    debug(f'receiving from {queue_name}')
     queue = await make_queue(connection, queue_name, timeout=3.0)
 
     data = None
@@ -93,13 +94,14 @@ async def receive(connection: Connection, queue_name: str, wait_for=5.0) -> Opti
 
         except Exception as e:
             if monotonic() - started_at > wait_for:
-                logger.error(f'{type(e)}{e} raises while receiving from {queue_name}')
+                # logger.error(f'{type(e)}{e} raises while receiving from {queue_name}')
+                debug(f'{type(e)}{e} raises while receiving from {queue_name}')
                 break
 
             await sleep(0.25)
 
         else:
-            logger.warning(f'received {message} for {monotonic() - started_at} seconds')
+            debug(f'received {message} for {monotonic() - started_at} seconds')
             async with message.process():
                 data = loads(message.body.decode())
                 break
@@ -129,13 +131,13 @@ async def call(quene_name, command_name, params, receive_from='returns'):
 
 
 async def subscribe(queue_name, hostname):
-    logger.warning(f'subscribing to {queue_name}')
+    debug(f'subscribing to {queue_name}')
     async with (await connect(hostname=hostname)) as connection:
         queue = await make_queue(connection, queue_name)
         async with queue.iterator() as queue_iter:
-            logger.warning(f'receiving from "{queue_name}"')
+            debug(f'receiving from "{queue_name}"')
             async for message in queue_iter:
-                logger.warning(f'received {message.body} from {queue_name}')
+                debug(f'received {message.body} from {queue_name}')
                 try:
                     async with message.process():
                         data = loads(message.body)

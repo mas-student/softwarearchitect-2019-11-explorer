@@ -3,6 +3,7 @@ from logging import getLogger
 from typing import Generator
 from asyncio import run
 
+from common.logging import debug
 from common.bus import (
     connect, subscribe, BaseBus, publish
 )
@@ -24,7 +25,7 @@ class Bus(BaseBus):
     async def receiving_commands(self) -> Generator[Command, None, None]:
         async for data in subscribe('commands', hostname=self.hostname):
             async with (await connect(hostname=self.hostname)) as return_connection:
-                logger.warning(f'receiving_command {data}')
+                debug(f'receiving_command {data}')
 
                 if not data.get('return_address'):
                     logger.error('return address is not defined')

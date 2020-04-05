@@ -27,7 +27,7 @@ services:
     volumes:
       - ./common/common:/home/user/backend/common
       - ./backend:/home/user/backend
-    command: [ "/bin/sh", "entrypoint.sh", "dev" ]
+    command: [ "/bin/sh", "entrypoint.sh" ]
     depends_on:
       - db
       - bus
@@ -112,7 +112,7 @@ services:
     volumes:
       - ./common/common:/home/user/loader/common
       - ./loader:/home/user/loader
-    command: [ "/bin/sh", "entrypoint.sh", "dev" ]
+    command: [ "/bin/sh", "entrypoint.sh" ]
     depends_on:
       - bus
       - bitcoin-server

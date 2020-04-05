@@ -11,5 +11,4 @@ app = make_app()
 
 
 if __name__ == '__main__':
-    logger.warning('starting main')
     main()
