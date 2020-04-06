@@ -24,6 +24,8 @@ services:
       - "18000"
     ports:
       - "18000:8080"
+    environment:
+      DEV: $DEV
     volumes:
       - ./common/common:/home/user/backend/common
       - ./backend:/home/user/backend
@@ -112,6 +114,8 @@ services:
     volumes:
       - ./common/common:/home/user/loader/common
       - ./loader:/home/user/loader
+    environment:
+      DEV: $DEV
     command: [ "/bin/sh", "entrypoint.sh" ]
     depends_on:
       - bus

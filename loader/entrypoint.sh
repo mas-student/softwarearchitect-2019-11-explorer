@@ -5,5 +5,9 @@ if [ "x$1" = "xtest" ]; then
 elif [ "x$1" = "xdev" ]; then
     adev runserver /home/user/loader/main.py
 else
-    python /home/user/loader/main.py
+    if [ "x$DEV" != "x" ]; then
+      adev runserver /home/user/loader/main.py
+    else
+      python /home/user/loader/main.py
+    fi
 fi
