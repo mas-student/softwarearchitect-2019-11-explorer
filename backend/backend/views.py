@@ -21,6 +21,13 @@ from common.bus import call
 # BALANCE }
 
 
+# CACHE {
+
+from backend.bus import get_balance
+
+# CACHE }
+
+
 import traceback
 
 
@@ -117,13 +124,6 @@ async def handler_wallet_create(request):
     wallet = await Wallet.create(db, **data)
 
     return web.json_response(dict(id=str(wallet._id), address=wallet.address), status=201)
-
-
-async def get_balance(address: str):
-    # TO DO testing -> returns
-    data = await call('commands', 'calc_balance', {'address': address}, receive_from='testing')
-
-    return data['result']
 
 
 async def handler_wallet_list(request: Request):

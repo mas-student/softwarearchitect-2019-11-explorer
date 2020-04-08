@@ -3,6 +3,7 @@ aio-pika==6.4.3
 aiohttp-devtools
 aiohttp-session==2.9.0
 aiohttp==3.6.2
+aioredis
 cryptography==2.8
 dataclasses-json==0.3.7
 motor==2.1.0

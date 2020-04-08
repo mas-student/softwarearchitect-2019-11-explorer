@@ -67,7 +67,7 @@ function setup_socket(socket) {
         console.log('Message from server ', event.data);
         const data = JSON.parse(event.data)
 
-        observableWalletStore.balances_by_address[data.address] += data.value
+        observableWalletStore.balances_by_address[data.address] = data.balance
     });
 
     window.socket.addEventListener('close', function (event) {

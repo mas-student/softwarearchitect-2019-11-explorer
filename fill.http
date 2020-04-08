@@ -26,6 +26,13 @@ Content-Type: application/json
 
 ###
 
+POST http://localhost:80/wallets
+Content-Type: application/json
+
+{"address": "2NBi56YqzhmKgeeBx2CqTh9JBKJ7PoEc137"}
+
+###
+
 GET http://localhost:80/wallets
 Accept: application/json
 

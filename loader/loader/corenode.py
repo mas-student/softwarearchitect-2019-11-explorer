@@ -85,8 +85,8 @@ class Corenode:
 
             return result
 
-    def iterator(self):
-        return self.Iterator(corenode=self)
+    def iterator(self, start:int=0):
+        return self.Iterator(corenode=self, available=start-1)
 
     async def generate(self, address=None):
         debug(f'generating {address}')
@@ -112,8 +112,9 @@ class Corenode:
         async for block in self.iterator():
             yield block
 
-    async def blocks(self) -> Generator[Block, None, None]:
-        async for block in self.iterator():
+    async def blocks(self, start: int) -> Generator[Block, None, None]:
+        # TO DP SAVE LATEST
+        async for block in self.iterator(start):
             yield block
 
 

@@ -16,12 +16,15 @@ NODE = 'http://bitcoin-server:18443/'
 
 
 class DB:
-    def __init__(self, db_path: str = None):
+    def __init__(self, db_path: str = None, drop:bool=False):
         self.on_income = lambda data: logger.warning(f'on income {data}')
         if db_path is None:
             db_path = '/tmp/tempdb/'
 
         self.base = BaseDB(db_path, create_if_missing=True)
+        if drop:
+            for key, value in self.base:
+                self.base.delete(key)
 
     def get_element(self, *args, **kwargs) -> Optional[BlockchainElement]:
         return get_element(self.base, *args, **kwargs)
@@ -38,7 +41,7 @@ class DB:
 
 def get_element(leveldb: BaseDB, key: str, cls: Type[BlockchainElement]) -> Optional[BlockchainElement]:
     # TO DO Generic method
-    logger.warning(f'get_element({leveldb}, {key}, {cls})')
+    debug(f'get_element({leveldb}, {key}, {cls})')
     data = loads(leveldb.get(key.encode('utf-8'), b'{}') or b'{}')
 
     if not data:
@@ -56,12 +59,14 @@ def put_element(leveldb: BaseDB, key: str, element: BlockchainElement):
 async def put_block(leveldb: BaseDB, block: Block, on_income):
     leveldb.put(block.hash.encode('utf-8'), dumps(asdict(block)).encode('utf-8'))
 
+    balances = {}
+
     for tx in block.tx:
         put_element(leveldb, tx.txid, tx)
         nos = {}
         for no, vin in enumerate(tx.vin):
             if not vin.txid:
-                logger.warning(f'{vin}')
+                debug(f'{vin}')
                 continue
             input_tx = get_element(leveldb, vin.txid, Transaction)
             if not input_tx:
@@ -71,11 +76,37 @@ async def put_block(leveldb: BaseDB, block: Block, on_income):
                     nos.setdefault(address, [None, None])[0] = no
         for no, vout in enumerate(tx.vout):
             for address in vout.scriptPubKey.addresses:
-                await on_income(dict(address=address, value=vout.value))
                 nos.setdefault(address, [None, None])[1] = no
 
         for address, (vin, vout) in nos.items():
             address_value = loads(leveldb.get(address.encode('utf-8'), b'[]'))
+            balance = balances.get(address)
+            if balance is None:
+                balance = 0
+                for block_hash, subtxid, subvin, subvout in address_value:
+                    subtx = get_element(leveldb, subtxid, Transaction)
+                    if subtx is None:
+                        logger.warning('Tx is None')
+                        continue
+                    income = outcome = 0
+                    if subvin is not None:
+                        outcome = subtx.vout[subvin].value
+                    if subvout is not None:
+                        income = subtx.vout[subvout].value
+                    balance += income
+                    balance -= outcome
+
+            income = outcome = 0
+            if vin is not None:
+                outcome = tx.vout[vin].value
+            if vout is not None:
+                income = tx.vout[vout].value
+            balance += income
+            balance -= outcome
+
+            logger.warning(F'ON INCOME {block.height} {dict(address=address, value=-1, balance=balance)}')
+            await on_income(dict(address=address, value=-1, balance=balance))
+
             address_value.append([block.hash, tx.txid, vin, vout])
             leveldb.put(address.encode('utf-8'), dumps(address_value).encode('utf-8'))
 
@@ -111,12 +142,13 @@ def connect(db_path: Optional[str] = None):
 
 
 async def init_db(app):
-    app.db = DB()
+    # TO DO SAVE LAST
+    app.db = DB(drop=True)
 
 
 async def handler_blocks(app):
     debug('handling blocks')
-    async for block in app.node.blocks():
+    async for block in app.node.blocks(start=0):
         debug(f'handling block {block}')
         await app.db.put_block(block)
 
