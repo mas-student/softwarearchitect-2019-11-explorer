@@ -9,5 +9,5 @@ else
       adev runserver -p 8080 /home/user/backend/main.py
     else
       python /home/user/backend/main.py
-  fi
+    fi
 fi

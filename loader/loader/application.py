@@ -48,6 +48,15 @@ async def on_ready(app):
 def make_app():
     app = web.Application()
 
+
+    # METRICS {
+    async def metrics(request):
+        return web.Response(body=f'block_count {request.app.node.block_count}')
+
+    app.router.add_get('/metrics', metrics)
+    # METRICS }
+
+
     app.on_startup.append(init_bus)
     app.on_startup.append(init_db)
     app.on_startup.append(init_node)
@@ -64,4 +73,4 @@ def make_app():
 def main(app=None):
     if app is None:
         app = make_app()
-    web.run_app(app)
+    web.run_app(app, host='0.0.0.0', port=8080)

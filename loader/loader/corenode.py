@@ -21,6 +21,7 @@ NODE_PASSWORD='p'
 
 class Corenode:
     def __init__(self, url=Optional[str]):
+        self.block_count = 0
         self.url = url or URL
 
         self.generating = Event()
@@ -114,7 +115,10 @@ class Corenode:
 
     async def blocks(self, start: int) -> Generator[Block, None, None]:
         # TO DP SAVE LATEST
+        # RENAMED INTO ITERATE BLOCKS
+        self.block_count = 0
         async for block in self.iterator(start):
+            self.block_count += 1
             yield block
 
 

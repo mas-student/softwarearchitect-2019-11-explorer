@@ -81,7 +81,7 @@ services:
   gateway:
     image: nginx
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./services/nginx.conf:/etc/nginx/nginx.conf
     expose:
       - "80"
     ports:
@@ -91,6 +91,8 @@ services:
       - swagger-ui
       - loader
       - frontend
+      - prometheus
+      - grafana
   #
   swagger-ui:
     image: swaggerapi/swagger-ui
@@ -130,3 +132,35 @@ services:
       - bitcoin-server
   # CHAIN }
 
+  # METCRICS {
+  prometheus:
+    image: prom/prometheus:v2.1.0
+    volumes:
+      - ./services/prometheus/:/etc/prometheus/
+    command:
+      - '--log.level=debug'
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    expose:
+      - 9090
+    ports:
+      - 9090:9090
+    depends_on:
+      - backend
+      - loader
+  #
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    expose:
+      - "3001"
+    ports:
+      - "3001:3000"
+    user: "0"
+    volumes:
+      - ./services/grafana:/var/lib/grafana
+    depends_on:
+      - prometheus
+  # METCRICS }
